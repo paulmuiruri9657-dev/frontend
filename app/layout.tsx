@@ -1,0 +1,38 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import Providers from "@/components/Providers";
+import { Toaster } from 'react-hot-toast';
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "EcoLooP Ke | Online Shopping for Electronics, Fashion, Home & more",
+  description: "EcoLooP Ke - Your sustainable online shopping destination for electronics, fashion, home, beauty & more",
+  manifest: "/manifest.json",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${inter.className} bg-[#f1f1f2] min-h-screen flex flex-col`} suppressHydrationWarning>
+        <Providers>
+          <Toaster />
+          <Header />
+          <main className="flex-grow">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
+      </body>
+    </html>
+  );
+}
+
+
