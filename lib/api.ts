@@ -46,6 +46,19 @@ class ApiClient {
         return data;
     }
 
+    // Generic methods
+    public async get<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+        return this.request<T>(endpoint, { ...options, method: 'GET' });
+    }
+
+    public async post<T>(endpoint: string, body: any, options: RequestInit = {}): Promise<T> {
+        return this.request<T>(endpoint, {
+            ...options,
+            method: 'POST',
+            body: JSON.stringify(body)
+        });
+    }
+
     // Products
     async getProducts(params: Record<string, any> = {}) {
         const queryString = new URLSearchParams(
