@@ -19,7 +19,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         },
       },
       {
-        urlPattern: ({ url }) => {
+        urlPattern: ({ url }: { url: URL }) => {
           return (
             url.pathname === "/" ||
             url.pathname.startsWith("/product/") ||
@@ -36,7 +36,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         },
       },
       {
-        urlPattern: ({ url }) => url.pathname.startsWith("/api/products"),
+        urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith("/api/products"),
         handler: "StaleWhileRevalidate",
         options: {
           cacheName: "api-product-cache",
@@ -47,7 +47,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         },
       },
       {
-        urlPattern: ({ url }) => url.pathname.startsWith("/_next/image"),
+        urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith("/_next/image"),
         handler: "StaleWhileRevalidate",
         options: {
           cacheName: "next-image-cache",
