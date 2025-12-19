@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -24,17 +25,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#f1f1f2] min-h-screen flex flex-col`} suppressHydrationWarning>
-        <Providers>
-          <OfflineBanner />
-          <Toaster />
-          <ErrorBoundary>
-            <Header />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </ErrorBoundary>
-        </Providers>
+        <Suspense fallback={null}>
+          <Providers>
+            <OfflineBanner />
+            <Toaster />
+            <ErrorBoundary>
+              <Header />
+              <main className="flex-grow">
+                {children}
+              </main>
+              <Footer />
+            </ErrorBoundary>
+          </Providers>
+        </Suspense>
       </body>
     </html>
   );
