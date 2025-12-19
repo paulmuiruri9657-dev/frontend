@@ -6,8 +6,9 @@ import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
 import { Toaster } from 'react-hot-toast';
 import OfflineBanner from "@/components/OfflineBanner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: 'swap' });
 
 export const metadata: Metadata = {
   title: "EcoLooP Ke | Online Shopping for Electronics, Fashion, Home & more",
@@ -26,15 +27,15 @@ export default function RootLayout({
         <Providers>
           <OfflineBanner />
           <Toaster />
-          <Header />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
+          <ErrorBoundary>
+            <Header />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </ErrorBoundary>
         </Providers>
       </body>
     </html>
   );
 }
-
-

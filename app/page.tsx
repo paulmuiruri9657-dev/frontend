@@ -9,8 +9,13 @@ import FlashSalesSection from '@/components/FlashSalesSection';
 import CategoriesGridSection from '@/components/CategoriesGridSection';
 import DealSection from '@/components/DealSection';
 import ProductCard from '@/components/ProductCard';
-import ProductRecommendations from '@/components/ProductRecommendations';
 import { api } from '@/lib/api';
+// Lazy load recommendations to improve initial load time
+import dynamic from 'next/dynamic';
+const ProductRecommendations = dynamic(() => import('@/components/ProductRecommendations'), {
+    loading: () => <div className="h-96 w-full bg-gray-100 animate-pulse rounded-lg my-8"></div>,
+    ssr: false // Load on client side only for better TTI
+});
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartStore } from '@/store/cartStore';
 import { Product, Category } from '@/types';

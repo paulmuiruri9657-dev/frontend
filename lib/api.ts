@@ -340,6 +340,14 @@ class ApiClient {
         return this.request<any>('/admin/analytics/overview');
     }
 
+    async getAnalyticsDashboard() {
+        return this.request<any>('/analytics/dashboard');
+    }
+
+    async getErrorLogs() {
+        return this.request<any>('/errors');
+    }
+
     async getAdminRevenue(period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
         return this.request<any>(`/admin/analytics/revenue?period=${period}`);
     }
