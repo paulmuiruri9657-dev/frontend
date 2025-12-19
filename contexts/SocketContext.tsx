@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
+import { api } from '../lib/api';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -54,13 +55,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
             setIsConnected(true);
 
             // Fetch initial unread count
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-            fetch(`${apiUrl}/messages/unread-count`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-                .then(res => res.json())
+            // Fetch initial unread count
+            api.getUnreadCount()
                 .then(data => {
                     if (data.success) {
                         setUnreadCount(data.data || 0);
