@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
 import { Toaster } from 'react-hot-toast';
+import OfflineBanner from "@/components/OfflineBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-[#f1f1f2] min-h-screen flex flex-col`} suppressHydrationWarning>
         <Providers>
+          <OfflineBanner />
           <Toaster />
           <Header />
           <main className="flex-grow">
