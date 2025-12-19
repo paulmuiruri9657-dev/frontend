@@ -219,6 +219,66 @@ export default function AuthModal({ isOpen, onClose, initialIsLogin = true }: Au
                                 />
                             </div>
 
+                            {/* Seller Additional Fields */}
+                            {registerData.role === 'seller' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 space-y-4">
+                                        <h3 className="text-sm font-bold text-[#8b5cf6] flex items-center gap-2">
+                                            🏪 Business Details
+                                        </h3>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Business Name *</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={registerData.businessName}
+                                                onChange={(e) => setRegisterData({ ...registerData, businessName: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 focus:border-[#8b5cf6] text-gray-900 font-medium bg-white"
+                                                placeholder="My Awesome Store"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">City *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={registerData.city}
+                                                    onChange={(e) => setRegisterData({ ...registerData, city: e.target.value })}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 focus:border-[#8b5cf6] text-gray-900 font-medium bg-white"
+                                                    placeholder="Nairobi"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Region/County *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={registerData.region}
+                                                    onChange={(e) => setRegisterData({ ...registerData, region: e.target.value })}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 focus:border-[#8b5cf6] text-gray-900 font-medium bg-white"
+                                                    placeholder="Nairobi"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Address/Location *</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={registerData.address}
+                                                onChange={(e) => setRegisterData({ ...registerData, address: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-100 focus:border-[#8b5cf6] text-gray-900 font-medium bg-white"
+                                                placeholder="e.g. CBD, Moffat Court"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="relative">
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Password</label>
                                 <div className="relative">
