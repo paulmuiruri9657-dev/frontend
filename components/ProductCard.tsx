@@ -96,7 +96,7 @@ export default function ProductCard({
 
     const handleClick = () => {
         // Track click activity for logged-in users (fire and forget)
-        if (user) {
+        if (user && product._id) {
             const categoryId = typeof product.category === 'object' && product.category?._id
                 ? product.category._id
                 : product.category;
