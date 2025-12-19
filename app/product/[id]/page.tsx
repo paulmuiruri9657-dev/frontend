@@ -512,12 +512,39 @@ export default function ProductDetailPage() {
             {/* Mobile: Compact Info Section */}
             <div className="md:hidden bg-white px-3 py-3 space-y-3">
                 {/* Badges */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-2">
                     {product.isOfficialStore && (
                         <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded">Official</span>
                     )}
                     {product.isFlashSale && (
                         <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded">⚡ Flash</span>
+                    )}
+                    <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${product.condition === 'new' ? 'bg-green-100 text-green-700' :
+                        product.condition === 'refurbished' ? 'bg-blue-100 text-blue-700' :
+                            'bg-orange-100 text-orange-700'
+                        }`}>
+                        {product.condition}
+                    </span>
+                </div>
+
+                {/* Mobile Location & Delivery */}
+                <div className="flex flex-wrap gap-2 text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 mb-2">
+                    {product.location && (
+                        <div className="flex items-center gap-1">
+                            <span className="text-red-500">📍</span>
+                            <span className="font-semibold">{product.location}</span>
+                        </div>
+                    )}
+                    {product.deliveryInfo && (
+                        <div className="flex items-center gap-1">
+                            <Truck className="h-3 w-3 text-[#8b5cf6]" />
+                            <span>
+                                {product.deliveryInfo.deliveryType === 'platform'
+                                    ? 'EcoLooP Delivery'
+                                    : `Seller Delivery (Meetup: ${product.deliveryInfo.meetupPoint || 'Contact Seller'})`
+                                }
+                            </span>
+                        </div>
                     )}
                 </div>
 
