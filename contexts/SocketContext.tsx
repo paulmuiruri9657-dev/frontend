@@ -40,8 +40,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         const token = localStorage.getItem('accessToken');
         if (!token) return;
 
-        // Connect to Socket.io server
-        const newSocket = io(process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000', {
+        // Connect to Socket.io server - strip /api if present
+        const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:5000';
+        const newSocket = io(socketUrl, {
             auth: { token },
             transports: ['websocket', 'polling']
         });
