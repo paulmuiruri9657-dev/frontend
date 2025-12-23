@@ -8,6 +8,7 @@ import Providers from "@/components/Providers";
 import { Toaster } from 'react-hot-toast';
 import OfflineBanner from "@/components/OfflineBanner";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 const inter = Inter({ subsets: ["latin"], display: 'swap' });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
+              <WhatsAppButton />
             </ErrorBoundary>
           </Providers>
         </Suspense>

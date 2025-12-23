@@ -13,6 +13,7 @@ import { useSocket } from '@/contexts/SocketContext';
 
 import AuthModal from './AuthModal';
 import PWAInstall from './PWAInstall';
+import { ThemeToggle } from './ThemeToggle';
 
 const Header = () => {
   const router = useRouter();
@@ -336,6 +337,9 @@ const Header = () => {
             )}
 
 
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Cart */}
             <div className="relative">

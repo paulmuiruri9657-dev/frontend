@@ -50,18 +50,6 @@ export default function ProductCard({
         e.preventDefault();
         e.stopPropagation();
 
-        if (!user) {
-            toast.error('Please sign in to add items to your cart', {
-                icon: '🔒',
-                style: {
-                    borderRadius: '10px',
-                    background: '#333',
-                    color: '#fff',
-                },
-            });
-            return;
-        }
-
         if (onAddToCart) {
             onAddToCart(product);
         } else {
@@ -231,6 +219,22 @@ export default function ProductCard({
                                 />
                             </div>
                             <span className="text-[8px] md:text-xs text-gray-500">{product.stock} left</span>
+                        </div>
+                    )}
+
+                    {/* Low Stock Warning - For ALL products with low stock */}
+                    {!product.isFlashSale && product.stock > 0 && product.stock <= 5 && (
+                        <div className="mt-auto">
+                            <div className="text-[9px] md:text-xs text-orange-600 font-semibold bg-orange-50 px-2 py-1 rounded">
+                                ⚠️ Only {product.stock} left in stock!
+                            </div>
+                        </div>
+                    )}
+
+                    {/* View Count - Social Proof */}
+                    {product.viewCount && product.viewCount > 10 && (
+                        <div className="text-[9px] md:text-xs text-gray-600 mt-1">
+                            🔥 {product.viewCount}+ people viewed this
                         </div>
                     )}
 

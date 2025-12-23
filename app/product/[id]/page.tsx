@@ -80,18 +80,6 @@ export default function ProductDetailPage() {
     const handleAddToCart = async () => {
         if (!product) return;
 
-        if (!user) {
-            toast.error('Please sign in to add items to your cart', {
-                icon: '🔒',
-                style: {
-                    borderRadius: '10px',
-                    background: '#333',
-                    color: '#fff',
-                },
-            });
-            return;
-        }
-
         setAddingToCart(true);
         try {
             await addToCart(product._id, quantity);

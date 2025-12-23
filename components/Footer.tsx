@@ -197,6 +197,42 @@ const Footer = () => {
                     </div>
                 </div>
 
+                {/* Newsletter Signup Section */}
+                <div className="mt-8 mb-8 max-w-2xl mx-auto">
+                    <div className="bg-gradient-to-r from-[#8b5cf6]/20 to-[#7c3aed]/20 backdrop-blur-md p-6 rounded-lg border border-white/20">
+                        <div className="text-center mb-4">
+                            <h3 className="font-bold text-lg md:text-xl text-white mb-2">📧 Join Our Newsletter</h3>
+                            <p className="text-gray-300 text-sm">Get exclusive deals, new arrivals, and special offers delivered to your inbox!</p>
+                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                const email = (e.target as HTMLFormElement).email.value;
+                                // TODO: Add newsletter API call
+                                console.log('Newsletter signup:', email);
+                                alert('Thanks for subscribing! 🎉');
+                                (e.target as HTMLFormElement).reset();
+                            }}
+                            className="flex flex-col md:flex-row gap-3"
+                        >
+                            <input
+                                type="email"
+                                name="email"
+                                placeholder="Enter your email address"
+                                required
+                                className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8b5cf6] focus:border-transparent"
+                            />
+                            <button
+                                type="submit"
+                                className="px-6 py-3 bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white font-bold rounded-lg hover:from-[#7c3aed] hover:to-[#6d28d9] transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                            >
+                                Subscribe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+
                 {/* Bottom Bar - Compact on Mobile */}
                 <div className="border-t border-white/10 pt-4 text-center text-gray-400 text-[10px] md:text-xs">
                     <p>&copy; {new Date().getFullYear()} EcoLooP Ke. All rights reserved.</p>
