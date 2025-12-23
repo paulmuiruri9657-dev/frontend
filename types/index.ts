@@ -39,6 +39,7 @@ export interface Product {
         qualityScore: number;
     };
     status: 'active' | 'inactive' | 'out_of_stock';
+    viewCount?: number; // View count for social proof
     createdAt: string;
     updatedAt: string;
     formattedPrice?: string;
