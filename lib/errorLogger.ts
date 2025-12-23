@@ -62,7 +62,7 @@ class ErrorLogger {
 
             // Use fetch directly or valid API method to avoid circular dependency if API uses this logger
             // Using standard fetch to keep it isolated
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/errors/log`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/errors/log`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
