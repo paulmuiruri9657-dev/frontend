@@ -240,9 +240,12 @@ const Header = () => {
                       <Link href="/wishlist" className="flex items-center gap-3 px-4 py-3 hover:bg-purple-50 hover:text-[#8b5cf6] text-sm text-gray-700 font-medium transition-colors" onClick={() => setActiveDropdown(null)}>
                         <Heart className="h-4 w-4" /> Saved Items
                       </Link>
+                      <div className="px-4 py-3 border-t border-gray-100 mt-1">
+                        <ThemeToggle />
+                      </div>
                       <button
                         onClick={() => { handleLogout(); setActiveDropdown(null); }}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 hover:text-red-700 text-sm w-full text-left text-red-600 font-medium transition-colors border-t border-gray-100 mt-1"
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 hover:text-red-700 text-sm w-full text-left text-red-600 font-medium transition-colors border-t border-gray-100"
                       >
                         <LogOut className="h-4 w-4" /> Logout
                       </button>
@@ -272,6 +275,9 @@ const Header = () => {
                       <Link href="/wishlist" className="flex items-center gap-3 px-4 py-3 hover:bg-purple-50 hover:text-[#8b5cf6] text-sm text-gray-700 font-medium transition-colors" onClick={() => setActiveDropdown(null)}>
                         <Heart className="h-4 w-4" /> Saved Items
                       </Link>
+                      <div className="px-4 py-3 border-t border-gray-100 mt-1">
+                        <ThemeToggle />
+                      </div>
                     </>
                   )}
                 </div>
@@ -337,9 +343,6 @@ const Header = () => {
             )}
 
 
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
 
             {/* Cart */}
             <div className="relative">
