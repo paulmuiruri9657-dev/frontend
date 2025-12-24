@@ -195,8 +195,8 @@ body {
 /* Mobile adjustment */
 @media (max-width: 768px) {
     .whatsapp-float {
-        bottom: 80px;
-        /* Above mobile bottom nav if you have one */
+        bottom: 16px;
+        /* At the very bottom corner on mobile */
         right: 16px;
         padding: 10px;
     }

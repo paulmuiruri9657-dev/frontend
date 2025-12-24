@@ -100,26 +100,21 @@ const Header = () => {
 
   return (
     <div className={`flex flex-col w-full sticky top-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? '' : ''}`}>
-      {/* Top Banner - Fully Transparent on Scroll */}
-      <div className={`w-full transition-all duration-500 ease-in-out ${isScrolled
-        ? 'bg-transparent border-b border-transparent'
-        : 'bg-[#8b5cf6]'
-        }`}>
+      {/* Top Banner */}
+      <div className="w-full bg-[#8b5cf6]">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-1">
           {/* Left: Sell */}
           <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/sell"
-              className={`text-xs font-bold hover:underline transition-colors duration-300 ${isScrolled ? 'text-[#8b5cf6] font-extrabold drop-shadow-sm' : 'text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]'
-                }`}
+              className="text-xs font-bold hover:underline transition-colors text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
             >
               Sell on EcoLooP
             </Link>
             {canInstall && (
               <button
                 onClick={() => (window as any).installEcoloopApp && (window as any).installEcoloopApp()}
-                className={`text-xs font-bold hover:underline transition-colors duration-300 flex items-center gap-1 ${isScrolled ? 'text-[#8b5cf6] font-extrabold drop-shadow-sm' : 'text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]'
-                  }`}
+                className="text-xs font-bold hover:underline transition-colors flex items-center gap-1 text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
               >
                 <Smartphone className="h-3 w-3" />
                 Install App
@@ -129,8 +124,7 @@ const Header = () => {
 
           {/* Center: Welcome Message */}
           <div className="flex-1 flex justify-center pl-4 md:pl-0">
-            <span className={`text-xs font-bold transition-colors duration-300 ${isScrolled ? 'text-[#8b5cf6] font-extrabold drop-shadow-sm' : 'text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]'
-              }`}>
+            <span className="text-xs font-bold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
               {user ? `Welcome, ${user.firstName}!` : 'Welcome to EcoLooP'}
             </span>
           </div>
@@ -139,8 +133,7 @@ const Header = () => {
           <div className="flex items-center">
             <Link
               href="/get-verified"
-              className={`text-xs font-bold transition-colors duration-300 ${isScrolled ? 'text-[#8b5cf6] font-extrabold drop-shadow-sm' : 'text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]'
-                }`}
+              className="text-xs font-bold transition-colors text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
             >
               Get Verified
             </Link>
@@ -148,11 +141,8 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Main Header - Fully Transparent on Scroll */}
-      <header className={`stunning-header transition-all duration-500 ease-in-out ${isScrolled
-        ? 'bg-transparent py-2 border-b border-transparent'
-        : 'bg-white shadow-sm py-3'
-        }`}>
+      {/* Main Header */}
+      <header className="stunning-header bg-white shadow-sm py-3">
         {/* Floating Orbs */}
         <div className="header-orb header-orb-1"></div>
         <div className="header-orb header-orb-2"></div>
