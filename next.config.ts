@@ -69,9 +69,6 @@ const nextConfig: NextConfig = withBundleAnalyzer(withPWA({
   // Enable compression
   compress: true,
 
-  // Enable SWC minification (faster than Terser)
-  swcMinify: true,
-
   // Strict mode for better performance
   reactStrictMode: true,
 
@@ -138,7 +135,7 @@ const nextConfig: NextConfig = withBundleAnalyzer(withPWA({
   },
 
   // Webpack optimization for code splitting
-  webpack: (config, { isServer }) => {
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
