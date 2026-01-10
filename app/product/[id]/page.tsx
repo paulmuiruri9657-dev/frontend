@@ -18,6 +18,8 @@ import ProductRecommendations from '@/components/ProductRecommendations';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartStore } from '@/store/cartStore';
 import { ProductDetailSkeleton } from '@/components/skeletons/ProductDetailSkeleton';
+import ProductSchema from '@/components/schema/ProductSchema';
+import BreadcrumbSchema from '@/components/schema/BreadcrumbSchema';
 
 type TabType = 'details' | 'specs' | 'reviews';
 
@@ -145,6 +147,18 @@ export default function ProductDetailPage() {
 
     return (
         <div className="pb-20 md:pb-0">
+            {/* SEO Schemas - Does not affect rendering */}
+            <ProductSchema product={product} />
+            {typeof product.category === 'object' && (
+                <BreadcrumbSchema
+                    items={[
+                        { name: 'Home', url: 'https://ecoloop.co.ke' },
+                        { name: product.category.name, url: `https://ecoloop.co.ke/category/${product.category.slug}` },
+                        { name: product.title, url: `https://ecoloop.co.ke/product/${slug}` }
+                    ]}
+                />
+            )}
+
             {/* Mobile: Image Gallery - Full Width */}
             <div className="md:hidden bg-white">
                 <div className="aspect-square bg-gray-50">

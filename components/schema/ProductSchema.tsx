@@ -1,23 +1,7 @@
 import Script from 'next/script';
 
-interface Product {
-    _id: string;
-    name: string;
-    description: string;
-    images: string[];
-    price: number;
-    comparePrice?: number;
-    stock: number;
-    brand?: string;
-    category?: {
-        name: string;
-    };
-    reviews?: any[];
-    rating?: number;
-}
-
 interface ProductSchemaProps {
-    product: Product;
+    product: any; // Accept any product shape from different sources
 }
 
 export default function ProductSchema({ product }: ProductSchemaProps) {
@@ -28,9 +12,9 @@ export default function ProductSchema({ product }: ProductSchemaProps) {
     const schema = {
         "@context": "https://schema.org",
         "@type": "Product",
-        "name": product.name,
+        "name": product.title || product.name,
         "description": product.description,
-        "image": product.images?.map(img => `https://ecoloop.co.ke${img}`) || [],
+        "image": product.images?.map((img: string) => `https://ecoloop.co.ke${img}`) || [],
         "sku": product._id,
         "brand": {
             "@type": "Brand",
@@ -59,7 +43,7 @@ export default function ProductSchema({ product }: ProductSchemaProps) {
             }
         }),
         ...(product.category && {
-            "category": product.category.name
+            "category": typeof product.category === 'object' ? product.category.name : product.category
         })
     };
 
