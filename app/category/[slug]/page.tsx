@@ -9,6 +9,7 @@ import { Product, Category, ProductFilters } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { ProductCardSkeleton } from '@/components/skeletons/ProductCardSkeleton';
 import { Skeleton } from '@/components/ui/Skeleton';
+import BreadcrumbSchema from '@/components/schema/BreadcrumbSchema';
 
 export default function CategoryPage() {
     const params = useParams();
@@ -172,6 +173,19 @@ export default function CategoryPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-4">
+            {/* SEO Breadcrumb Schema - Does not affect rendering */}
+            {category && (
+                <BreadcrumbSchema
+                    items={[
+                        { name: 'Home', url: 'https://ecoloop.co.ke' },
+                        ...(category.breadcrumb?.map(crumb => ({
+                            name: crumb.name,
+                            url: `https://ecoloop.co.ke/category/${crumb.slug}`
+                        })) || [{ name: category.name, url: `https://ecoloop.co.ke/category/${slug}` }])
+                    ]}
+                />
+            )}
+
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                 <Link href="/" className="hover:text-[#f68b1e]">Home</Link>
