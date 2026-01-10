@@ -401,6 +401,24 @@ export default function ProductDetailPage() {
                                     <span className="text-xs font-medium">Buyer Protection</span>
                                 </div>
                             </div>
+
+                            {/* Chat with Seller - Desktop */}
+                            {product.sellerId && (
+                                <div className="flex items-center gap-3 mt-6 pt-6 border-t">
+                                    {typeof product.sellerId === 'object' && product.sellerId.avatar && (
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
+                                            <img src={product.sellerId.avatar} alt="Seller" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <p className="text-sm text-gray-600 mb-2">Have questions about this product?</p>
+                                        <ChatButton
+                                            sellerId={typeof product.sellerId === 'object' ? product.sellerId._id : product.sellerId}
+                                            sellerName={product.seller?.name || 'Seller'}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Tabs Content - Desktop */}
