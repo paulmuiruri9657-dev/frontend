@@ -67,7 +67,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 const nextConfig: NextConfig = withBundleAnalyzer(withPWA({
   env: {
-    NEXT_PUBLIC_API_URL: 'https://ecoloop-api-prod-v3.eba-5sfies2a.us-east-1.elasticbeanstalk.com',
+    NEXT_PUBLIC_API_URL: 'https://api.ecoloop.co.ke',
   },
 
   // Enable compression
