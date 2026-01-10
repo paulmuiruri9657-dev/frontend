@@ -9,6 +9,8 @@ import { Toaster } from 'react-hot-toast';
 import OfflineBanner from "@/components/OfflineBanner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import OrganizationSchema from "@/components/schema/OrganizationSchema";
+import WebSiteSchema from "@/components/schema/WebSiteSchema";
 
 const inter = Inter({ subsets: ["latin"], display: 'swap' });
 
@@ -85,6 +87,8 @@ export default function RootLayout({
               <WhatsAppButton />
             </ErrorBoundary>
           </Providers>
+          <OrganizationSchema />
+          <WebSiteSchema />
         </Suspense>
       </body>
     </html>
