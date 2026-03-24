@@ -29,9 +29,12 @@ async function getProductData(slug: string) {
     }
 }
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-    // Next.js params are automatically available in server components via props
-    const { id } = params;
+type Props = {
+    params: Promise<{ id: string }>;
+};
+
+export default async function ProductDetailPage({ params }: Props) {
+    const { id } = await params;
     const initialData = await getProductData(id);
     
     if (!initialData) {

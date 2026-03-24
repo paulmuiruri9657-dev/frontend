@@ -69,9 +69,15 @@ async function getCategoryData(slug: string, searchParams: { [key: string]: stri
     }
 }
 
-export default async function CategoryPage({ params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
-    const { slug } = params;
-    const initialData = await getCategoryData(slug, searchParams);
+type Props = {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function CategoryPage({ params, searchParams }: Props) {
+    const { slug } = await params;
+    const resolvedSearchParams = await searchParams;
+    const initialData = await getCategoryData(slug, resolvedSearchParams);
     
     if (!initialData || !initialData.category) {
         return (
