@@ -37,7 +37,7 @@ export default function Home() {
             try {
                 const [flashSalesRes, productsRes, categoriesRes, brandsRes, homepageCatRes] = await Promise.all([
                     api.getFlashSales(),
-                    api.getProducts({ limit: 12, sort: '-createdAt' }), // Sort by newest first
+                    api.getProducts({ limit: 50, sort: '-createdAt' }), // Sort by newest first
                     api.getCategories({ level: 0 }),
                     api.getBrands(),
                     api.getHomepageCategories()
