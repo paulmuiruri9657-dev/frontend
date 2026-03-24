@@ -219,10 +219,10 @@ export default function CartPage() {
                                         </div>
                                     </div>
 
-                                    <button className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white py-5 rounded-2xl font-black text-xl hover:shadow-[0_15px_30px_rgba(139,92,246,0.4)] transition-all active:scale-95 flex items-center justify-center gap-4 group">
+                                    <a href="/checkout" className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white py-5 rounded-2xl font-black text-xl hover:shadow-[0_15px_30px_rgba(139,92,246,0.4)] transition-all active:scale-95 flex items-center justify-center gap-4 group">
                                         Checkout
                                         <ChevronRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </div>

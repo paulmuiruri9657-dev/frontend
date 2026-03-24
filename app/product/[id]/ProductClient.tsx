@@ -15,6 +15,7 @@ import { Product, Review, RatingBreakdown } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import ChatButton from '@/components/ChatButton';
 import ProductRecommendations from '@/components/ProductRecommendations';
+import CartToast from '@/components/CartToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartStore } from '@/store/cartStore';
 import { useRecentlyViewedStore } from '@/store/useRecentlyViewedStore';
@@ -56,6 +57,23 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
     const [showFullDesc, setShowFullDesc] = useState(false);
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
+    const [showCartToast, setShowCartToast] = useState(false);
+
+    // Feature 3: FOMO — live viewer count (randomized per session for social proof)
+    const [viewerCount] = useState(() => Math.floor(Math.random() * 27) + 8);
+
+    // Feature 3: Sticky buy bar — shows when user scrolls past main add-to-cart
+    const [showStickyBar, setShowStickyBar] = useState(false);
+    const addToCartRef = React.useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => setShowStickyBar(!entry.isIntersecting),
+            { threshold: 0 }
+        );
+        if (addToCartRef.current) observer.observe(addToCartRef.current);
+        return () => observer.disconnect();
+    }, [product]);
 
     // Auto-swipe images every 3 seconds when there are multiple images
     useEffect(() => {
@@ -72,17 +90,17 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
 
     const handleAddToCart = async () => {
         if (!product) return;
-
         setAddingToCart(true);
         try {
             await addToCart(product._id, quantity);
             setAddedToCart(true);
+            setShowCartToast(true); // Feature 4: Show premium toast
             setTimeout(() => setAddedToCart(false), 2000);
         } catch (error) {
             console.error('Error adding to cart:', error);
         } finally {
             setAddingToCart(false);
-        };
+        }
     };
 
     const handleWishlistToggle = async () => {
@@ -136,6 +154,31 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
 
     return (
         <div className="pb-20 md:pb-0">
+            {/* Feature 4: CartToast notification */}
+            {showCartToast && product && (
+                <CartToast product={product} onClose={() => setShowCartToast(false)} />
+            )}
+
+            {/* Feature 3: Sticky Buy Bar (Desktop) — appears when main CTA scrolls out of view */}
+            <div className={`hidden md:flex fixed bottom-0 left-0 right-0 z-50 items-center justify-between px-8 py-4 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-2xl transition-all duration-300 ${
+                showStickyBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+            }`}>
+                <div className="flex items-center gap-4">
+                    <img src={product?.images?.[0]} alt={product?.title} className="w-12 h-12 object-contain rounded-lg bg-gray-50 border border-gray-100" />
+                    <div>
+                        <p className="font-bold text-gray-900 line-clamp-1 max-w-xs">{product?.title}</p>
+                        <p className="text-[#8b5cf6] font-black">{product?.currency} {product?.price.toLocaleString()}</p>
+                    </div>
+                </div>
+                <button
+                    onClick={handleAddToCart}
+                    disabled={addingToCart || !product || product.stock === 0}
+                    className="bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white px-10 py-3 rounded-xl font-black text-lg hover:shadow-[0_8px_25px_rgba(139,92,246,0.4)] transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3"
+                >
+                    <ShoppingCart className="h-5 w-5" />
+                    Add to Cart
+                </button>
+            </div>
             {/* SEO Schemas - Does not affect rendering */}
             <ProductSchema product={product} />
             {typeof product.category === 'object' && (
@@ -322,19 +365,37 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 mb-4">
+                                    {/* Feature 3: Live demand pulse */}
+                                    <div className="flex items-center gap-2 mb-3 bg-red-50 px-3 py-2 rounded-xl border border-red-100">
+                                        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                                        <span className="text-sm font-bold text-red-600">{viewerCount} people are viewing this right now</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 mb-2">
                                         {product.stock > 0 ? (
                                             <>
                                                 <Check className="h-5 w-5 text-green-500" />
                                                 <span className="text-green-600 font-medium">In Stock</span>
                                                 {product.stock <= 10 && (
-                                                    <span className="text-orange-500 text-sm">({product.stock} left)</span>
+                                                    <span className="text-orange-500 text-sm font-bold">— Only {product.stock} left!</span>
                                                 )}
                                             </>
                                         ) : (
                                             <span className="text-red-500 font-medium">Out of Stock</span>
                                         )}
                                     </div>
+                                    {/* Feature 3: Scarcity bar */}
+                                    {product.stock > 0 && product.stock <= 10 && (
+                                        <div className="mb-3">
+                                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all"
+                                                    style={{ width: `${Math.min((product.stock / 10) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-orange-600 font-bold mt-1">🔥 Selling fast — grab yours before it's gone!</p>
+                                        </div>
+                                    )}
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-4">
                                             <span className="text-gray-600 text-sm">Quantity:</span>
@@ -355,9 +416,10 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
                                             </div>
                                         </div>
                                         <button
+                                            ref={addToCartRef}
                                             onClick={handleAddToCart}
                                             disabled={addingToCart || product.stock === 0}
-                                            className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white py-3 rounded-lg font-bold hover:from-[#7c3aed] hover:to-[#6d28d9] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                            className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white py-3.5 rounded-xl font-black text-lg hover:shadow-[0_8px_25px_rgba(139,92,246,0.4)] hover:from-[#7c3aed] hover:to-[#6d28d9] transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
                                             {addingToCart ? (
                                                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>

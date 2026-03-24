@@ -26,6 +26,8 @@ export default function ProductCard({
     variant = 'standard'
 }: ProductCardProps) {
     const imageUrl = product.images?.[0] || 'https://via.placeholder.com/300x300?text=No+Image';
+    const hoverImageUrl = product.images?.[1] || imageUrl;
+    const [isHovered, setIsHovered] = useState(false);
     const { user } = useAuth();
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -104,7 +106,11 @@ export default function ProductCard({
 
     return (
         <Link href={`/product/${product.slug}`} onClick={handleClick}>
-            <div className="group bg-white rounded-md md:rounded-xl shadow-sm md:shadow-md hover:shadow-xl transition-all duration-150 overflow-hidden relative h-full flex flex-col border border-gray-100/50 hover:border-gray-200/80 hover:-translate-y-0.5 md:hover:-translate-y-1">
+            <div
+                className="group bg-white rounded-md md:rounded-xl shadow-sm md:shadow-md hover:shadow-xl transition-all duration-150 overflow-hidden relative h-full flex flex-col border border-gray-100/50 hover:border-gray-200/80 hover:-translate-y-0.5 md:hover:-translate-y-1"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
                 {/* Badges - Compact on Mobile */}
                 <div className="absolute top-1 md:top-3 left-1 md:left-3 flex flex-col gap-0.5 md:gap-1 z-10">
                     {product.discount && product.discount > 0 && (
@@ -142,7 +148,7 @@ export default function ProductCard({
                     )}
                 </button>
 
-                {/* Image */}
+                {/* Image with crossfade hover effect */}
                 <div className="w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-hidden relative">
                     {/* Badges */}
                     <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
@@ -162,14 +168,30 @@ export default function ProductCard({
                             </span>
                         )}
                     </div>
+                    {/* Primary Image */}
                     <Image
                         src={imageUrl}
                         alt={product.title}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="object-contain group-hover:scale-105 md:group-hover:scale-110 transition-transform duration-300"
+                        className={`object-contain transition-all duration-500 ease-in-out ${
+                            isHovered && hoverImageUrl !== imageUrl ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+                        }`}
                         unoptimized={imageUrl.includes('placehold') || imageUrl.includes('placeholder') || imageUrl.includes('amazonaws.com')}
                     />
+                    {/* Hover Image (crossfade overlay) */}
+                    {hoverImageUrl !== imageUrl && (
+                        <Image
+                            src={hoverImageUrl}
+                            alt={product.title + ' alternate view'}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className={`object-contain absolute inset-0 transition-all duration-500 ease-in-out ${
+                                isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
+                            }`}
+                            unoptimized
+                        />
+                    )}
                 </div>
 
                 {/* Content - Ultra Compact on Mobile */}

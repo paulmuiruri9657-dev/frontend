@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { Product } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartStore } from '@/store/cartStore';
-import LiveSearch from './LiveSearch';
+import SearchDrawer from './SearchDrawer';
 import { useSocket } from '@/contexts/SocketContext';
 
 import AuthModal from './AuthModal';
@@ -193,7 +193,7 @@ const Header = () => {
 
           {/* Search Bar - Desktop */}
           <div className="flex-1 max-w-2xl hidden md:block">
-            <LiveSearch />
+            <SearchDrawer />
           </div>
 
           {/* Right Actions */}
@@ -354,7 +354,7 @@ const Header = () => {
 
         {/* Mobile Search */}
         <div className="md:hidden px-4 mt-3">
-          <LiveSearch />
+          <SearchDrawer />
         </div>
       </header>
 
