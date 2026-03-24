@@ -1,268 +1,261 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { MessageCircle, Send, Bot, User, X, Minimize2, ShoppingBag } from 'lucide-react';
+import { Send, Bot, User, Sparkles, ShoppingBag, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Product } from '@/types';
 
-const quickReplies = [
-    { text: 'Track my order', response: 'To track your order, go to My Account > Orders and click on the order you want to track. You&apos;ll see the current status and tracking information.' },
-    { text: 'Return policy', response: 'You can return most items within 7 days of delivery. Items must be unused and in their original packaging. Visit Help Center > Returns for more details.' },
-    { text: 'Payment methods', response: 'We accept M-Pesa, Airtel Money, Visa, Mastercard, and Cash on Delivery in select areas.' },
-    { text: 'Delivery time', response: 'Delivery times vary: Nairobi (1-3 days), Major towns (3-5 days), Rural areas (5-7 days).' },
-    { text: 'Cancel order', response: 'You can cancel your order before it ships. Go to My Account > Orders > Select order > Cancel Order.' },
-];
-
 interface Message {
     id: number;
-    text: string;
-    isBot: boolean;
+    role: 'user' | 'assistant';
+    content: string;
     timestamp: Date;
     products?: Product[];
+    streaming?: boolean;
 }
+
+const SUGGESTED_PROMPTS = [
+    '🔍 Find me a good smartphone under KSh 30,000',
+    '📦 How do I track my order?',
+    '↩️ What is the return policy?',
+    '⚡ Show me current flash sales',
+    '💳 What payment methods do you accept?',
+    '🛒 How do I sell on EcoLooP?',
+];
 
 export default function ChatPage() {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: 1,
-            text: 'Hello! 👋 Welcome to EcoLooP Customer Support. How can I help you today?',
-            isBot: true,
-            timestamp: new Date()
+            role: 'assistant',
+            content: "Hey there! 👋 I'm your EcoLooP AI shopping assistant, powered by advanced AI.\n\nI have live access to our full product catalog and can help you:\n- 🔍 **Find the perfect product** at the best price\n- 📦 **Track orders** & understand policies\n- 💬 **Compare products** and give honest recommendations\n- 🛒 **Guide you through buying or selling**\n\nWhat can I help you with today?",
+            timestamp: new Date(),
         }
     ]);
-    const [inputValue, setInputValue] = useState('');
-    const [isMinimized, setIsMinimized] = useState(false);
+    const [input, setInput] = useState('');
+    const [isStreaming, setIsStreaming] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    // Fetch products for context
+    // Load product catalog for AI context
     useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                // Fetch a decent number of recent products for the AI to "know" about
-                const res = await api.getProducts({ limit: 50, sort: '-createdAt' });
-                if (res.data) {
-                    setProducts(res.data);
-                }
-            } catch (error) {
-                console.error('Failed to load products for chat context:', error);
-            }
-        };
-        fetchProducts();
+        api.getProducts({ limit: 100, sort: '-createdAt' })
+            .then(res => { if (res.data) setProducts(res.data); })
+            .catch(() => {});
     }, []);
 
-    const addMessage = (text: string, isBot: boolean, foundProducts?: Product[]) => {
-        setMessages(prev => [
-            ...prev,
-            {
-                id: prev.length + 1,
-                text,
-                isBot,
-                timestamp: new Date(),
-                products: foundProducts
-            }
-        ]);
-    };
+    // Auto scroll
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
 
-    const handleQuickReply = (reply: typeof quickReplies[0]) => {
-        addMessage(reply.text, false);
-        setTimeout(() => {
-            addMessage(reply.response, true);
-        }, 500);
-    };
+    const sendMessage = async (text: string) => {
+        if (!text.trim() || isStreaming) return;
 
-    const [isTyping, setIsTyping] = useState(false);
+        const userMessage: Message = {
+            id: Date.now(),
+            role: 'user',
+            content: text.trim(),
+            timestamp: new Date(),
+        };
 
-    const handleSend = async () => {
-        if (!inputValue.trim()) return;
+        const assistantPlaceholder: Message = {
+            id: Date.now() + 1,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date(),
+            streaming: true,
+        };
 
-        const userText = inputValue;
-        addMessage(userText, false);
-        setInputValue('');
-        setIsTyping(true);
+        setMessages(prev => [...prev, userMessage, assistantPlaceholder]);
+        setInput('');
+        setIsStreaming(true);
 
         try {
-            // Import dynamically to avoid SSR issues if any (though likely fine here)
-            const { aiChatService } = await import('@/lib/aiChatService');
-            // Pass the fetched products to the AI
-            const response = await aiChatService.processUserMessage(userText, products);
+            // Build message history for Groq (last 12 messages to stay within context)
+            const history = [...messages.slice(-12), userMessage].map(m => ({
+                role: m.role,
+                content: m.content,
+            }));
 
-            setIsTyping(false);
-            addMessage(response.text, true, response.products);
-        } catch (error) {
-            console.error('AI Chat Error:', error);
-            setIsTyping(false);
-            addMessage("I'm having trouble connecting right now. Please try again or contact support.", true);
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: history, products }),
+            });
+
+            if (!res.ok || !res.body) throw new Error('Failed to connect to AI');
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let fullContent = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                fullContent += decoder.decode(value);
+
+                // Update the streaming message in place
+                setMessages(prev => prev.map(m =>
+                    m.id === assistantPlaceholder.id
+                        ? { ...m, content: fullContent, streaming: true }
+                        : m
+                ));
+            }
+
+            // Mark streaming done
+            setMessages(prev => prev.map(m =>
+                m.id === assistantPlaceholder.id
+                    ? { ...m, content: fullContent, streaming: false }
+                    : m
+            ));
+        } catch (err) {
+            setMessages(prev => prev.map(m =>
+                m.id === assistantPlaceholder.id
+                    ? { ...m, content: "Sorry, I couldn't connect right now. Please try again in a moment!", streaming: false }
+                    : m
+            ));
+        } finally {
+            setIsStreaming(false);
+            inputRef.current?.focus();
         }
     };
 
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        sendMessage(input);
+    };
+
+    // Simple markdown-to-JSX renderer for bold and bullets
+    const renderMarkdown = (text: string) => {
+        const lines = text.split('\n');
+        return lines.map((line, i) => {
+            const parts = line.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
+                part.startsWith('**') && part.endsWith('**')
+                    ? <strong key={j}>{part.slice(2, -2)}</strong>
+                    : part
+            );
+            if (line.startsWith('- ')) {
+                return <div key={i} className="flex gap-2 my-0.5"><span className="text-[#8b5cf6] flex-shrink-0">•</span><span>{parts.slice(1)}</span></div>;
+            }
+            return <span key={i}>{parts}{i < lines.length - 1 && '\n'}</span>;
+        });
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                {/* Chat Header */}
-                <div className="bg-[#8b5cf6] text-white p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-white/20 p-2 rounded-full">
-                            <MessageCircle className="h-6 w-6" />
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-lg">EcoLooP Support Chat</h1>
-                            <p className="text-sm text-white/80">We typically reply within minutes</p>
-                        </div>
+        <div className="max-w-3xl mx-auto px-4 py-6 h-[calc(100vh-80px)] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] rounded-2xl px-6 py-4 mb-4 flex items-center justify-between shadow-lg">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-white" />
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setIsMinimized(!isMinimized)}
-                            className="p-2 hover:bg-white/20 rounded"
-                        >
-                            <Minimize2 className="h-5 w-5" />
-                        </button>
+                    <div>
+                        <h1 className="text-white font-black text-lg">EcoLooP AI Assistant</h1>
+                        <p className="text-white/70 text-xs flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 bg-green-400 rounded-full animate-pulse" />
+                            Powered by Groq · Live product access
+                        </p>
                     </div>
                 </div>
-
-                {!isMinimized && (
-                    <>
-                        {/* Messages */}
-                        <div className="h-96 overflow-y-auto p-4 bg-gray-50">
-                            {messages.map((message) => (
-                                <div
-                                    key={message.id}
-                                    className={`mb-4 flex flex-col ${message.isBot ? 'items-start' : 'items-end'}`}
-                                >
-                                    <div className={`flex ${message.isBot ? 'justify-start' : 'justify-end'} w-full`}>
-                                        <div className={`flex-shrink-0 ${message.isBot ? 'order-1 mr-2' : 'order-2 ml-2'}`}>
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${message.isBot ? 'bg-[#8b5cf6] text-white' : 'bg-gray-300'
-                                                }`}>
-                                                {message.isBot ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
-                                            </div>
-                                        </div>
-
-                                        <div className={`max-w-[80%] ${message.isBot ? 'order-2' : 'order-1'}`}>
-                                            <div
-                                                className={`p-3 rounded-lg ${message.isBot
-                                                    ? 'bg-white shadow-sm rounded-tl-none'
-                                                    : 'bg-[#8b5cf6] text-white rounded-tr-none'
-                                                    }`}
-                                            >
-                                                {message.text}
-                                            </div>
-                                            <p className={`text-xs text-gray-400 mt-1 ${message.isBot ? '' : 'text-right'}`}>
-                                                {formatTime(message.timestamp)}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Render Product Cards if available */}
-                                    {message.products && message.products.length > 0 && (
-                                        <div className={`mt-2 w-[85%] ml-10 grid grid-cols-1 sm:grid-cols-2 gap-2`}>
-                                            {message.products.map(product => (
-                                                <Link
-                                                    href={`/product/${product._id}`}
-                                                    key={product._id}
-                                                    className="bg-white p-2 rounded border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex gap-2 items-center"
-                                                >
-                                                    <div className="w-12 h-12 bg-gray-100 rounded relative overflow-hidden flex-shrink-0">
-                                                        {product.images?.[0] ? (
-                                                            <Image
-                                                                src={product.images[0]}
-                                                                alt={product.title}
-                                                                fill
-                                                                className="object-cover"
-                                                                sizes="48px"
-                                                                unoptimized
-                                                            />
-                                                        ) : (
-                                                            <ShoppingBag className="w-6 h-6 text-gray-400 m-auto mt-3" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-gray-900 truncate">{product.title}</p>
-                                                        <p className="text-xs text-[#8b5cf6] font-bold">KSh {product.price.toLocaleString()}</p>
-                                                    </div>
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            {isTyping && (
-                                <div className="mb-4 flex justify-start">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-[#8b5cf6] flex items-center justify-center text-white">
-                                            <Bot className="h-4 w-4" />
-                                        </div>
-                                        <div className="bg-white p-3 rounded-lg rounded-tl-none shadow-sm flex gap-1">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Quick Replies */}
-                        <div className="p-3 border-t bg-white">
-                            <p className="text-xs text-gray-500 mb-2">Quick questions:</p>
-                            <div className="flex flex-wrap gap-2">
-                                {quickReplies.map((reply, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handleQuickReply(reply)}
-                                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
-                                    >
-                                        {reply.text}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Input */}
-                        <div className="p-4 border-t bg-white">
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                    placeholder="Type your message..."
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8b5cf6] focus:border-transparent"
-                                />
-                                <button
-                                    onClick={handleSend}
-                                    className="px-4 py-2 bg-[#8b5cf6] text-white rounded-lg hover:bg-[#7c3aed] transition-colors"
-                                >
-                                    <Send className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                )}
+                <button
+                    onClick={() => setMessages([{
+                        id: 1, role: 'assistant',
+                        content: "Fresh start! 👋 What can I help you find today?",
+                        timestamp: new Date()
+                    }])}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white"
+                    title="New conversation"
+                >
+                    <RotateCcw className="h-4 w-4" />
+                </button>
             </div>
 
-            {/* Additional Info */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="font-bold mb-2">Operating Hours</h3>
-                    <p className="text-gray-600">Monday - Saturday: 8:00 AM - 6:00 PM</p>
-                    <p className="text-gray-600">Sunday: 9:00 AM - 5:00 PM</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="font-bold mb-2">Other Ways to Reach Us</h3>
-                    <p className="text-gray-600">
-                        📞 WhatsApp: <a href="https://wa.me/254705424364" target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">0705424364</a>
-                    </p>
-                    <p className="text-gray-600">
-                        ✉️ Email: <a href="mailto:ecoloopke@gmail.com" className="text-[#8b5cf6] hover:underline">ecoloopke@gmail.com</a>
-                    </p>
-                </div>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
+                {messages.map(message => (
+                    <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        {message.role === 'assistant' && (
+                            <div className="w-8 h-8 bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                <Bot className="h-4 w-4 text-white" />
+                            </div>
+                        )}
+
+                        <div className={`max-w-[80%] ${message.role === 'user' ? 'order-first' : ''}`}>
+                            <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
+                                message.role === 'user'
+                                    ? 'bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] text-white rounded-tr-sm'
+                                    : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
+                            }`}>
+                                {message.role === 'assistant' ? renderMarkdown(message.content) : message.content}
+                                {message.streaming && (
+                                    <span className="inline-block w-1.5 h-4 bg-[#8b5cf6] rounded-sm ml-1 animate-pulse align-middle" />
+                                )}
+                            </div>
+                            <p className={`text-[10px] text-gray-400 mt-1 ${message.role === 'user' ? 'text-right' : ''}`}>
+                                {message.timestamp.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+
+                        {message.role === 'user' && (
+                            <div className="w-8 h-8 bg-gray-200 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <User className="h-4 w-4 text-gray-600" />
+                            </div>
+                        )}
+                    </div>
+                ))}
+
+                {/* Suggested prompts — show only at the start */}
+                {messages.length === 1 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+                        {SUGGESTED_PROMPTS.map((prompt, i) => (
+                            <button
+                                key={i}
+                                onClick={() => sendMessage(prompt.replace(/^[^ ]+ /, ''))}
+                                className="text-left text-sm px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#8b5cf6] hover:text-[#8b5cf6] hover:bg-purple-50 transition-all shadow-sm font-medium"
+                            >
+                                {prompt}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <form onSubmit={handleSubmit} className="flex gap-3 bg-white border border-gray-200 rounded-2xl p-2 shadow-lg focus-within:border-[#8b5cf6] focus-within:ring-2 focus-within:ring-purple-100 transition-all">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    placeholder={isStreaming ? 'AI is responding...' : 'Ask me anything — products, orders, policies...'}
+                    disabled={isStreaming}
+                    className="flex-1 px-3 py-2 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-400 disabled:opacity-60"
+                />
+                <button
+                    type="submit"
+                    disabled={!input.trim() || isStreaming}
+                    className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] text-white rounded-xl flex items-center justify-center hover:shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    {isStreaming
+                        ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <Send className="h-4 w-4" />
+                    }
+                </button>
+            </form>
+
+            {/* Footer Links */}
+            <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-400">
+                <a href="https://wa.me/254705424364" target="_blank" rel="noopener noreferrer" className="hover:text-[#8b5cf6] transition-colors">📞 WhatsApp</a>
+                <span>·</span>
+                <a href="mailto:ecoloopke@gmail.com" className="hover:text-[#8b5cf6] transition-colors">✉️ Email</a>
+                <span>·</span>
+                <Link href="/help" className="hover:text-[#8b5cf6] transition-colors">Help Center</Link>
             </div>
         </div>
     );
 }
-
