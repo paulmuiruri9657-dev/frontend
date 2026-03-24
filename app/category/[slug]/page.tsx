@@ -1,414 +1,89 @@
-'use client';
+import CategoryClient from './CategoryClient';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronRight, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import { api } from '@/lib/api';
-import { Product, Category, ProductFilters } from '@/types';
-import ProductCard from '@/components/ProductCard';
-import { ProductCardSkeleton } from '@/components/skeletons/ProductCardSkeleton';
-import { Skeleton } from '@/components/ui/Skeleton';
-import BreadcrumbSchema from '@/components/schema/BreadcrumbSchema';
+export const revalidate = 60; // ISR cache every 60 seconds
 
-export default function CategoryPage() {
-    const params = useParams();
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const slug = params?.slug as string;
+async function getCategoryData(slug: string, searchParams: { [key: string]: string | string[] | undefined }) {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    
+    try {
+        let category = null;
+        let brands: string[] = [];
 
-    const [category, setCategory] = useState<Category | null>(null);
-    const [products, setProducts] = useState<Product[]>([]);
-    const [brands, setBrands] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showFilters, setShowFilters] = useState(false);
-    const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+        if (slug === 'all') {
+            category = {
+                _id: 'all',
+                name: 'All Products',
+                slug: 'all',
+                icon: '🛍️',
+                level: 0,
+                order: 0,
+                isActive: true,
+                productCount: 0,
+                ancestors: [],
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            const brandsRes = await fetch(`${API_URL}/brands`, { next: { revalidate: 60 } })
+                .then((res) => res.json())
+                .catch(() => ({ data: [] }));
+            brands = brandsRes.data?.map((b: any) => b.brand) || [];
+        } else {
+            const catRes = await fetch(`${API_URL}/categories/${slug}`, { next: { revalidate: 60 } })
+                .then((res) => res.json())
+                .catch(() => ({ data: null }));
+            category = catRes.data;
 
-    // Filter states
-    const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-    const [minRating, setMinRating] = useState<number | null>(null);
-    const [sortBy, setSortBy] = useState('-createdAt');
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!slug) return;
-            setLoading(true);
-
-            try {
-                // Handle "all" category case
-                if (slug === 'all') {
-                    setCategory({
-                        _id: 'all',
-                        name: 'All Products',
-                        slug: 'all',
-                        icon: '🛍️',
-                        level: 0,
-                        order: 0,
-                        isActive: true,
-                        productCount: 0,
-                        ancestors: [],
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    } as Category);
-
-                    // Fetch all brands
-                    const brandsRes = await api.getBrands();
-                    setBrands(brandsRes.data.map(b => b.brand));
-                } else {
-                    // Fetch specific category
-                    const catResponse = await api.getCategoryBySlug(slug);
-                    setCategory(catResponse.data);
-
-                    // Fetch brands for this category
-                    const brandsResponse = await api.getCategoryBrands(slug);
-                    setBrands(brandsResponse.data || []);
-                }
-
-                // Build filters from URL
-                const filters: ProductFilters = {
-                    sort: (searchParams.get('sort') as any) || '-createdAt',
-                    page: parseInt(searchParams.get('page') || '1', 10),
-                    limit: 30
-                };
-
-                // Only add category filter if not "all"
-                if (slug !== 'all') {
-                    filters.category = slug;
-                }
-
-                const brandParam = searchParams.get('brand');
-                if (brandParam) {
-                    filters.brand = brandParam.split(',');
-                    setSelectedBrands(brandParam.split(','));
-                }
-
-                const minPrice = searchParams.get('minPrice');
-                const maxPrice = searchParams.get('maxPrice');
-                if (minPrice) {
-                    filters.minPrice = parseInt(minPrice, 10);
-                    setPriceRange(prev => ({ ...prev, min: minPrice }));
-                }
-                if (maxPrice) {
-                    filters.maxPrice = parseInt(maxPrice, 10);
-                    setPriceRange(prev => ({ ...prev, max: maxPrice }));
-                }
-
-                const rating = searchParams.get('rating');
-                if (rating) {
-                    filters.rating = parseFloat(rating);
-                    setMinRating(parseFloat(rating));
-                }
-
-                // Fetch products
-                const productsResponse = await api.getProducts(filters);
-                setProducts(productsResponse.data || []);
-                setPagination(productsResponse.pagination);
-
-            } catch (error) {
-                console.error('Error fetching category:', error);
-            } finally {
-                setLoading(false);
+            if (category) {
+                const brandsRes = await fetch(`${API_URL}/categories/${slug}/brands`, { next: { revalidate: 60 } })
+                    .then((res) => res.json())
+                    .catch(() => ({ data: [] }));
+                brands = brandsRes.data || [];
             }
-        };
-
-        fetchData();
-    }, [slug, searchParams]);
-
-    const applyFilters = () => {
-        const params = new URLSearchParams();
-
-        if (selectedBrands.length > 0) {
-            params.set('brand', selectedBrands.join(','));
         }
-        if (priceRange.min) params.set('minPrice', priceRange.min);
-        if (priceRange.max) params.set('maxPrice', priceRange.max);
-        if (minRating) params.set('rating', minRating.toString());
-        if (sortBy !== '-createdAt') params.set('sort', sortBy);
 
-        router.push(`/category/${slug}?${params.toString()}`);
-        setShowFilters(false);
-    };
+        const params = new URLSearchParams();
+        if (slug !== 'all') params.append('category', slug);
+        
+        params.append('sort', (searchParams.sort as string) || '-createdAt');
+        params.append('page', (searchParams.page as string) || '1');
+        params.append('limit', '30');
 
-    const clearFilters = () => {
-        setSelectedBrands([]);
-        setPriceRange({ min: '', max: '' });
-        setMinRating(null);
-        setSortBy('-createdAt');
-        router.push(`/category/${slug}`);
-    };
+        if (searchParams.brand) params.append('brand', searchParams.brand as string);
+        if (searchParams.minPrice) params.append('minPrice', searchParams.minPrice as string);
+        if (searchParams.maxPrice) params.append('maxPrice', searchParams.maxPrice as string);
+        if (searchParams.rating) params.append('rating', searchParams.rating as string);
 
-    if (loading) {
+        const productsRes = await fetch(`${API_URL}/products?${params.toString()}`, { next: { revalidate: 60 } })
+            .then((res) => res.json())
+            .catch(() => ({ data: [], pagination: { page: 1, pages: 1, total: 0 } }));
+
+        return {
+            category,
+            brands,
+            products: productsRes.data || [],
+            pagination: productsRes.pagination || { page: 1, pages: 1, total: 0 }
+        };
+    } catch (e) {
+        console.error('Failed to pre-fetch category data server-side:', e);
+        return null;
+    }
+}
+
+export default async function CategoryPage({ params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
+    const { slug } = params;
+    const initialData = await getCategoryData(slug, searchParams);
+    
+    if (!initialData || !initialData.category) {
         return (
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                <div className="flex gap-6">
-                    {/* Sidebar Skeleton */}
-                    <div className="hidden lg:block w-64 flex-shrink-0">
-                        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-                            <Skeleton className="h-6 w-32" />
-                            <div className="space-y-2">
-                                {[...Array(8)].map((_, i) => (
-                                    <Skeleton key={i} className="h-4 w-full" />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Content Skeleton */}
-                    <div className="flex-1">
-                        <div className="flex justify-between items-center mb-6">
-                            <Skeleton className="h-8 w-48" />
-                            <Skeleton className="h-4 w-24" />
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-4">
-                            {[...Array(12)].map((_, i) => (
-                                <ProductCardSkeleton key={i} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
+            <div className="max-w-7xl mx-auto px-4 py-12 text-center flex flex-col items-center">
+                <h1 className="text-2xl font-bold mb-4">Category Not Found</h1>
+                <p className="text-gray-500 mb-6">The category you are looking for does not exist.</p>
+                <a href="/" className="bg-[#8b5cf6] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#7c3aed]">
+                    Return to Homepage
+                </a>
             </div>
         );
     }
 
-    return (
-        <div className="max-w-7xl mx-auto px-4 py-4">
-            {/* SEO Breadcrumb Schema - Does not affect rendering */}
-            {category && (
-                <BreadcrumbSchema
-                    items={[
-                        { name: 'Home', url: 'https://ecoloop.co.ke' },
-                        ...(category.breadcrumb?.map(crumb => ({
-                            name: crumb.name,
-                            url: `https://ecoloop.co.ke/category/${crumb.slug}`
-                        })) || [{ name: category.name, url: `https://ecoloop.co.ke/category/${slug}` }])
-                    ]}
-                />
-            )}
-
-            {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                <Link href="/" className="hover:text-[#f68b1e]">Home</Link>
-                <ChevronRight className="h-4 w-4" />
-                {category?.breadcrumb?.map((crumb, idx) => (
-                    <React.Fragment key={idx}>
-                        <Link href={`/category/${crumb.slug}`} className="hover:text-[#f68b1e]">
-                            {crumb.name}
-                        </Link>
-                        {idx < (category.breadcrumb?.length || 0) - 1 && <ChevronRight className="h-4 w-4" />}
-                    </React.Fragment>
-                ))}
-            </nav>
-
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">{category?.name || 'Products'}</h1>
-                <p className="text-gray-500">{pagination.total} products</p>
-            </div>
-
-            <div className="flex gap-6">
-                {/* Filter Sidebar - Desktop */}
-                <aside className="w-64 hidden lg:block">
-                    <div className="bg-white rounded-lg shadow-sm p-4 sticky top-20">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold">Filters</h3>
-                            <button onClick={clearFilters} className="text-sm text-[#f68b1e] hover:underline">
-                                Clear all
-                            </button>
-                        </div>
-
-                        {/* Brand Filter */}
-                        {brands.length > 0 && (
-                            <div className="mb-6">
-                                <h4 className="font-semibold mb-3">Brand</h4>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {brands.map((brand) => (
-                                        <label key={brand} className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedBrands.includes(brand)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedBrands([...selectedBrands, brand]);
-                                                    } else {
-                                                        setSelectedBrands(selectedBrands.filter(b => b !== brand));
-                                                    }
-                                                }}
-                                                className="rounded border-gray-300 text-[#f68b1e] focus:ring-[#f68b1e]"
-                                            />
-                                            <span className="text-sm">{brand}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Price Range */}
-                        <div className="mb-6">
-                            <h4 className="font-semibold mb-3">Price (KSh)</h4>
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    placeholder="Min"
-                                    value={priceRange.min}
-                                    onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                />
-                                <span className="text-gray-400">-</span>
-                                <input
-                                    type="number"
-                                    placeholder="Max"
-                                    value={priceRange.max}
-                                    onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Rating Filter */}
-                        <div className="mb-6">
-                            <h4 className="font-semibold mb-3">Rating</h4>
-                            <div className="space-y-2">
-                                {[4, 3, 2, 1].map((rating) => (
-                                    <label key={rating} className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name="rating"
-                                            checked={minRating === rating}
-                                            onChange={() => setMinRating(rating)}
-                                            className="text-[#f68b1e] focus:ring-[#f68b1e]"
-                                        />
-                                        <span className="text-sm">{rating}+ Stars</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={applyFilters}
-                            className="w-full bg-[#f68b1e] text-white py-2 rounded-lg font-bold hover:bg-[#e07e1b] transition-colors"
-                        >
-                            Apply Filters
-                        </button>
-                    </div>
-                </aside>
-
-                {/* Products Grid */}
-                <div className="flex-1">
-                    {/* Sort & Filter Mobile */}
-                    <div className="flex items-center justify-between mb-4 bg-white rounded-lg shadow-sm p-3">
-                        <button
-                            onClick={() => setShowFilters(true)}
-                            className="lg:hidden flex items-center gap-2 text-gray-700"
-                        >
-                            <SlidersHorizontal className="h-5 w-5" />
-                            Filters
-                        </button>
-
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">Sort by:</span>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => {
-                                    setSortBy(e.target.value);
-                                    const params = new URLSearchParams(searchParams.toString());
-                                    params.set('sort', e.target.value);
-                                    router.push(`/category/${slug}?${params.toString()}`);
-                                }}
-                                className="border border-gray-300 rounded px-3 py-1 text-sm"
-                            >
-                                <option value="-createdAt">Newest</option>
-                                <option value="popular">Popularity</option>
-                                <option value="price_asc">Price: Low to High</option>
-                                <option value="price_desc">Price: High to Low</option>
-                                <option value="rating">Rating</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Products */}
-                    {products.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-4">
-                            {products.map((product) => (
-                                <ProductCard key={product._id} product={product} showAddToCart={false} variant="compact" />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-                            <p className="text-gray-500">No products found</p>
-                            <button onClick={clearFilters} className="mt-4 text-[#f68b1e] hover:underline">
-                                Clear filters
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Pagination */}
-                    {pagination.pages > 1 && (
-                        <div className="flex justify-center gap-2 mt-8">
-                            {Array.from({ length: Math.min(pagination.pages, 5) }, (_, i) => (
-                                <Link
-                                    key={i + 1}
-                                    href={`/category/${slug}?page=${i + 1}`}
-                                    className={`px-4 py-2 rounded ${pagination.page === i + 1
-                                        ? 'bg-[#f68b1e] text-white'
-                                        : 'bg-white text-gray-700 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {i + 1}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Mobile Filter Modal */}
-            {showFilters && (
-                <div className="fixed inset-0 z-50 lg:hidden">
-                    <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
-                    <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl overflow-y-auto">
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <h3 className="font-bold text-lg">Filters</h3>
-                            <button onClick={() => setShowFilters(false)}>
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-                        <div className="p-4">
-                            {/* Same filter content as desktop */}
-                            {brands.length > 0 && (
-                                <div className="mb-6">
-                                    <h4 className="font-semibold mb-3">Brand</h4>
-                                    <div className="space-y-2">
-                                        {brands.map((brand) => (
-                                            <label key={brand} className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedBrands.includes(brand)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setSelectedBrands([...selectedBrands, brand]);
-                                                        } else {
-                                                            setSelectedBrands(selectedBrands.filter(b => b !== brand));
-                                                        }
-                                                    }}
-                                                    className="rounded border-gray-300 text-[#f68b1e]"
-                                                />
-                                                <span className="text-sm">{brand}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            <button
-                                onClick={applyFilters}
-                                className="w-full bg-[#f68b1e] text-white py-3 rounded-lg font-bold"
-                            >
-                                Apply Filters
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+    return <CategoryClient initialData={initialData} slug={slug} />;
 }
