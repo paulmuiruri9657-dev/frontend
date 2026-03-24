@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import ImageLightbox from '@/components/ImageLightbox';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     Star, Heart, ShoppingCart, Truck, RotateCcw, Shield,
-    ChevronRight, Share2, Minus, Plus, Check, ChevronDown, ChevronUp
+    ChevronRight, Share2, Minus, Plus, Check, ChevronDown, ChevronUp, ZoomIn
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '@/lib/api';
@@ -58,6 +57,20 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const [showCartToast, setShowCartToast] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
+    // Touch swipe for mobile gallery
+    const touchStartX = useRef<number | null>(null);
+    const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null || !product) return;
+        const delta = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(delta) > 40) {
+            if (delta > 0) setSelectedImage(i => Math.min(i + 1, product.images.length - 1));
+            else setSelectedImage(i => Math.max(i - 1, 0));
+        }
+        touchStartX.current = null;
+    };
 
     // Feature 3: FOMO — live viewer count (randomized per session for social proof)
     const [viewerCount] = useState(() => Math.floor(Math.random() * 27) + 8);
@@ -159,6 +172,16 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
                 <CartToast product={product} onClose={() => setShowCartToast(false)} />
             )}
 
+            {/* Swipeable Fullscreen Lightbox */}
+            {lightboxOpen && product?.images?.length && (
+                <ImageLightbox
+                    images={product.images}
+                    initialIndex={selectedImage}
+                    title={product.title}
+                    onClose={() => setLightboxOpen(false)}
+                />
+            )}
+
             {/* Feature 3: Sticky Buy Bar (Desktop) — appears when main CTA scrolls out of view */}
             <div className={`hidden md:flex fixed bottom-0 left-0 right-0 z-50 items-center justify-between px-8 py-4 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-2xl transition-all duration-300 ${
                 showStickyBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
@@ -193,15 +216,23 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
 
             {/* Mobile: Image Gallery - Full Width */}
             <div className="md:hidden bg-white">
-                <div className="aspect-square bg-gray-50">
-                    <Zoom>
-                        <img
-                            src={product.images?.[selectedImage] || 'https://via.placeholder.com/500'}
-                            alt={product.title}
-                            className="w-full h-full object-contain"
-                            style={{ width: '100%' }}
-                        />
-                    </Zoom>
+                <div
+                    className="aspect-square bg-gray-50 cursor-zoom-in relative overflow-hidden"
+                    onClick={() => setLightboxOpen(true)}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <img
+                        src={product.images?.[selectedImage] || 'https://via.placeholder.com/500'}
+                        alt={product.title}
+                        className="w-full h-full object-contain select-none"
+                    />
+                    {/* Swipe hint */}
+                    {product.images?.length > 1 && (
+                        <div className="absolute bottom-2 right-2 bg-black/40 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            {selectedImage + 1} / {product.images.length}
+                        </div>
+                    )}
                 </div>
                 {product.images && product.images.length > 1 && (
                     <div className="flex gap-2 p-2 overflow-x-auto">
@@ -240,15 +271,20 @@ export default function ProductClient({ initialData, slug }: ProductClientProps)
                     {/* Left Column - Images */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow-sm p-4 sticky top-20">
-                            <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-4">
-                                <Zoom>
-                                    <img
-                                        src={product.images?.[selectedImage] || 'https://via.placeholder.com/500'}
-                                        alt={product.title}
-                                        className="w-full h-full object-contain cursor-zoom-in"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Zoom>
+                            <div
+                                className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-4 cursor-zoom-in relative group"
+                                onClick={() => setLightboxOpen(true)}
+                            >
+                                <img
+                                    src={product.images?.[selectedImage] || 'https://via.placeholder.com/500'}
+                                    alt={product.title}
+                                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-black/40 text-white text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5">
+                                        <ZoomIn className="h-3.5 w-3.5" /> Click to expand
+                                    </div>
+                                </div>
                             </div>
                             {product.images && product.images.length > 1 && (
                                 <div className="flex gap-2 overflow-x-auto">
