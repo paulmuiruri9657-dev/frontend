@@ -18,22 +18,22 @@ export default function CartToast({ product, onClose }: CartToastProps) {
         // Slide in
         const showTimer = setTimeout(() => setVisible(true), 50);
 
-        // Progress countdown: 3 seconds
+        // Progress countdown: 1.2 seconds
         const interval = setInterval(() => {
             setProgress(prev => {
                 if (prev <= 0) {
                     clearInterval(interval);
                     return 0;
                 }
-                return prev - (100 / 30); // 30 steps over 3s
+                return prev - (100 / 12); // 12 steps over 1.2s
             });
         }, 100);
 
-        // Auto dismiss after 3.2s
+        // Auto dismiss after 1.2s
         const dismiss = setTimeout(() => {
             setVisible(false);
-            setTimeout(onClose, 400);
-        }, 3200);
+            setTimeout(onClose, 300);
+        }, 1200);
 
         return () => {
             clearTimeout(showTimer);
