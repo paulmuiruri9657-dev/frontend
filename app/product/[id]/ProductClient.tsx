@@ -17,6 +17,7 @@ import ChatButton from '@/components/ChatButton';
 import ProductRecommendations from '@/components/ProductRecommendations';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartStore } from '@/store/cartStore';
+import { useRecentlyViewedStore } from '@/store/useRecentlyViewedStore';
 import { ProductDetailSkeleton } from '@/components/skeletons/ProductDetailSkeleton';
 import ProductSchema from '@/components/schema/ProductSchema';
 import BreadcrumbSchema from '@/components/schema/BreadcrumbSchema';
@@ -36,8 +37,16 @@ interface ProductClientProps {
 export default function ProductClient({ initialData, slug }: ProductClientProps) {
     const { addToCart } = useCartStore();
     const { user } = useAuth();
+    const { addRecentlyViewed } = useRecentlyViewedStore();
 
     const { product, relatedProducts, reviews, ratingBreakdown } = initialData;
+
+    // Background passive tracking: When user looks at product, store in memory
+    useEffect(() => {
+        if (product) {
+            addRecentlyViewed(product);
+        }
+    }, [product, addRecentlyViewed]);
 
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
