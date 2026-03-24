@@ -99,50 +99,11 @@ const Header = () => {
   };
 
   return (
-    <div className={`flex flex-col w-full sticky top-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? '' : ''}`}>
-      {/* Top Banner */}
-      <div className="w-full bg-[#8b5cf6]">
-        <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-1">
-          {/* Left: Sell */}
-          <div className="flex items-center gap-2 md:gap-4">
-            <Link
-              href="/sell"
-              className="text-xs font-bold hover:underline transition-colors text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
-            >
-              Sell on EcoLooP
-            </Link>
-            {canInstall && (
-              <button
-                onClick={() => (window as any).installEcoloopApp && (window as any).installEcoloopApp()}
-                className="text-xs font-bold hover:underline transition-colors flex items-center gap-1 text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
-              >
-                <Smartphone className="h-3 w-3" />
-                Install App
-              </button>
-            )}
-          </div>
-
-          {/* Center: Welcome Message */}
-          <div className="flex-1 flex justify-center pl-4 md:pl-0">
-            <span className="text-xs font-bold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-              {user ? `Welcome, ${user.firstName}!` : 'Welcome to EcoLooP'}
-            </span>
-          </div>
-
-          {/* Right: Get Verified */}
-          <div className="flex items-center">
-            <Link
-              href="/get-verified"
-              className="text-xs font-bold transition-colors text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
-            >
-              Get Verified
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Header */}
-      <header className="stunning-header bg-white shadow-sm py-3">
+  return (
+    <>
+      <div className={`flex flex-col w-full sticky top-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? '' : ''}`}>
+        {/* Main Header */}
+        <header className="stunning-header bg-white shadow-sm py-3">
         {/* Floating Orbs */}
         <div className="header-orb header-orb-1"></div>
         <div className="header-orb header-orb-2"></div>
@@ -453,15 +414,55 @@ const Header = () => {
         </div>
       )}
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialIsLogin={isLogin}
-
       />
       <PWAInstall />
-    </div>
+      </div>
+
+      {/* Fixed Bottom Banner */}
+      <div className="fixed bottom-0 left-0 w-full bg-[#8b5cf6] z-[100] shadow-[0_-4px_15px_rgba(139,92,246,0.3)] safe-area-bottom">
+        <div className="max-w-7xl mx-auto flex justify-between items-center px-2 md:px-4 py-2.5">
+          {/* Left: Sell */}
+          <div className="flex items-center gap-3 md:gap-5">
+            <Link
+              href="/sell"
+              className="text-[11px] md:text-sm font-bold hover:text-white/80 transition-colors text-white drop-shadow-md"
+            >
+              Sell on EcoLooP
+            </Link>
+            {canInstall && (
+              <button
+                onClick={() => (window as any).installEcoloopApp && (window as any).installEcoloopApp()}
+                className="text-[11px] md:text-sm font-bold hover:text-white/80 transition-colors flex items-center gap-1.5 text-white drop-shadow-md"
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Install App
+              </button>
+            )}
+          </div>
+
+          {/* Center: Welcome Message */}
+          <div className="hidden md:flex flex-1 justify-center pl-4 md:pl-0">
+            <span className="text-xs md:text-sm font-bold text-white drop-shadow-md">
+              {user ? `Welcome, ${user.firstName}!` : 'Welcome to EcoLooP'}
+            </span>
+          </div>
+
+          {/* Right: Get Verified */}
+          <div className="flex items-center">
+            <Link
+              href="/get-verified"
+              className="text-[11px] md:text-sm font-bold hover:text-white/80 transition-colors text-white drop-shadow-md bg-white/20 px-2 py-0.5 md:py-1 rounded-sm border border-white/30"
+            >
+              Get Verified
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
