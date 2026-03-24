@@ -61,6 +61,8 @@ class ApiClient {
 
     // Products
     async getProducts(params: Record<string, any> = {}) {
+        // Add timestamp to break aggressive PWA caching so new products appear instantly
+        params.t = Date.now();
         const queryString = new URLSearchParams(
             Object.entries(params).filter(([_, v]) => v !== undefined && v !== '')
         ).toString();
@@ -72,15 +74,15 @@ class ApiClient {
     }
 
     async getFlashSales() {
-        return this.request<any>('/products/flash-sales');
+        return this.request<any>('/products/flash-sales?t=' + Date.now());
     }
 
     async getDeals() {
-        return this.request<any>('/products/deals');
+        return this.request<any>('/products/deals?t=' + Date.now());
     }
 
     async getHomepageCategories() {
-        return this.request<any>('/products/homepage-categories');
+        return this.request<any>(`/products/homepage-categories?t=${Date.now()}`);
     }
 
     async searchProducts(query: string, limit = 10) {
