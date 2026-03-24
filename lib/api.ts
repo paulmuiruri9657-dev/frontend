@@ -158,6 +158,20 @@ class ApiClient {
         return response;
     }
 
+    async googleLogin(credential: string) {
+        const response = await this.request<any>('/auth/google', {
+            method: 'POST',
+            body: JSON.stringify({ credential }),
+        });
+
+        if (response.data?.accessToken) {
+            localStorage.setItem('accessToken', response.data.accessToken);
+            localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
+
+        return response;
+    }
+
     async register(data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) {
         const response = await this.request<any>('/auth/register', {
             method: 'POST',

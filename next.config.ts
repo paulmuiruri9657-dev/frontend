@@ -74,12 +74,16 @@ const nextConfig: NextConfig = withBundleAnalyzer(withPWA({
   // Strict mode for better performance
   reactStrictMode: true,
 
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'lh3.googleusercontent.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
+            },
       {
         protocol: 'https',
         hostname: 'ecoloop-storage-cloud.s3.us-east-1.amazonaws.com',

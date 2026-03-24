@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -11,7 +12,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, initialIsLogin = true }: AuthModalProps) {
-    const { login, register } = useAuth();
+    const { login, register, googleLogin } = useAuth();
     const [isLogin, setIsLogin] = useState(initialIsLogin);
     const [authLoading, setAuthLoading] = useState(false);
     const [authError, setAuthError] = useState('');
@@ -89,6 +90,40 @@ export default function AuthModal({ isOpen, onClose, initialIsLogin = true }: Au
                             <span className="text-lg">⚠️</span> {authError}
                         </div>
                     )}
+
+                    {/* Google Login Button */}
+                    <div className="mb-6 flex justify-center w-full">
+                        <GoogleLogin
+                            onSuccess={async (credentialResponse) => {
+                                try {
+                                    setAuthLoading(true);
+                                    setAuthError('');
+                                    await googleLogin(credentialResponse.credential!);
+                                    onClose();
+                                } catch (error: any) {
+                                    setAuthError(error.message || 'Google login failed.');
+                                } finally {
+                                    setAuthLoading(false);
+                                }
+                            }}
+                            onError={() => {
+                                setAuthError('Google Sign-in failed');
+                            }}
+                            theme="outline"
+                            size="large"
+                            text="continue_with"
+                            width="100%"
+                        />
+                    </div>
+                    
+                    <div className="relative mb-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500 font-medium">Or continue with email</span>
+                        </div>
+                    </div>
 
                     {isLogin ? (
                         /* Login Form */
