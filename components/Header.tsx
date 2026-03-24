@@ -99,7 +99,6 @@ const Header = () => {
   };
 
   return (
-  return (
     <>
       <div className={`flex flex-col w-full sticky top-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? '' : ''}`}>
         {/* Main Header */}
