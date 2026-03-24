@@ -79,6 +79,10 @@ class ApiClient {
         return this.request<any>('/products/deals');
     }
 
+    async getHomepageCategories() {
+        return this.request<any>('/products/homepage-categories');
+    }
+
     async searchProducts(query: string, limit = 10) {
         return this.request<any>(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
     }

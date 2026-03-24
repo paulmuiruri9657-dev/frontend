@@ -27,6 +27,7 @@ export default function Home() {
     const [flashSaleProducts, setFlashSaleProducts] = useState<Product[]>([]);
     const [flashSaleEndsAt, setFlashSaleEndsAt] = useState<string | null>(null);
     const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [homepageGroups, setHomepageGroups] = useState<any[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [topBrands, setTopBrands] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -34,16 +35,18 @@ export default function Home() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [flashSalesRes, productsRes, categoriesRes, brandsRes] = await Promise.all([
+                const [flashSalesRes, productsRes, categoriesRes, brandsRes, homepageCatRes] = await Promise.all([
                     api.getFlashSales(),
-                    api.getProducts({ limit: 24, sort: '-createdAt' }), // Sort by newest first
+                    api.getProducts({ limit: 12, sort: '-createdAt' }), // Sort by newest first
                     api.getCategories({ level: 0 }),
-                    api.getBrands()
+                    api.getBrands(),
+                    api.getHomepageCategories()
                 ]);
 
                 setFlashSaleProducts(flashSalesRes.data || []);
                 setFlashSaleEndsAt(flashSalesRes.endsAt);
                 setAllProducts(productsRes.data || []);
+                setHomepageGroups(homepageCatRes.data || []);
                 setCategories(categoriesRes.data || []);
 
                 // Get top 16 brands by product count
@@ -151,38 +154,17 @@ export default function Home() {
                 )
             }
 
-            {/* Category-based Deals - Show all categories with products */}
+            {/* Category-based Groups - Show all categories with products */}
             {
-                categories.map((category) => {
-                    const categoryProducts = allProducts.filter((p) => {
-                        // Handle both single category and array of categories
-                        if (typeof p.category === 'object' && p.category !== null) {
-                            // If category is populated object
-                            if (Array.isArray(p.category)) {
-                                // Array of category objects or IDs
-                                return p.category.some((cat: any) =>
-                                    (cat?.slug === category.slug) || (cat?._id === category._id) || (cat === category._id)
-                                );
-                            } else {
-                                // Single category object
-                                return p.category?.slug === category.slug || p.category?._id === category._id;
-                            }
-                        }
-                        // If category is just an ID string or array of ID strings
-                        if (Array.isArray(p.category)) {
-                            return p.category.includes(category._id);
-                        }
-                        return p.category === category._id;
-                    });
-
-                    if (categoryProducts.length === 0) return null;
+                homepageGroups.map((group) => {
+                    if (!group.products || group.products.length === 0) return null;
 
                     return (
                         <DealSection
-                            key={category._id}
-                            title={`${category.name} Deals`}
-                            products={categoryProducts}
-                            category={category}
+                            key={group.category._id}
+                            title={`${group.category.name} Category`}
+                            products={group.products}
+                            category={group.category}
                             onAddToCart={handleAddToCart}
                         />
                     );
