@@ -78,6 +78,10 @@ const nextConfig: NextConfig = withBundleAnalyzer(withPWA({
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'ecoloop-storage-cloud.s3.us-east-1.amazonaws.com',
       },
       {
